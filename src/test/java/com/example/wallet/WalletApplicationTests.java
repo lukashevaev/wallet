@@ -1,39 +1,41 @@
 package com.example.wallet;
 
 import com.example.wallet.controller.WalletController;
+import com.example.wallet.model.dto.OperationContext;
 import com.example.wallet.service.BlockingWalletService;
+import com.example.wallet.service.ReactiveWalletService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@WebMvcTest(WalletController.class)
-class WalletApplicationTests extends FunctionalTest {
+@WebFluxTest(WalletController.class)
+class WalletApplicationTests {
 
 	@Autowired
-	private MockMvc mockMvc;
+	private WebTestClient webClient;
 
 	@MockitoBean
-	BlockingWalletService blockingWalletService;
+	ReactiveWalletService reactiveWalletService;
 
 	@Test
 	public void getAmountByUUID() throws Exception {
 		var amount = new BigDecimal("123.23");
-		Mockito.when(blockingWalletService.findWalletAmount("1")).thenReturn(amount);
+		Mockito.when(reactiveWalletService.reactiveFindWalletAmount("1")).thenReturn(Mono.just(amount));
 
-		mockMvc.perform(get("/api/v1/wallets?wallet_id=1"))
-				.andDo(print())
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.value").value(amount));
+		var actual = webClient.get()
+				.uri("/api/v1/wallets?wallet_id=1")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(OperationContext.class)
+				.returnResult().getResponseBody().getValue().toString();
+
+		Assertions.assertEquals(actual, amount.toString());
 	}
-
 }

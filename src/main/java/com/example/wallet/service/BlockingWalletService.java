@@ -30,7 +30,6 @@ public class BlockingWalletService {
         return walletRepository.findWalletAmount(walletId);
     }
 
-    @Transactional
     public OperationContext updateWallet(String operationDto) {
         try {
             var dto = objectMapper.readValue(operationDto, OperationDto.class);
