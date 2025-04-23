@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: ekaterina
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: wallets
+      changes:
+        - createTable:
+            schemaName: public
+            tableName: wallets
+            columns:
+              - column:
+                  name: wallet_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 2
+      author: ekaterina
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sql: "ALTER TABLE wallets ADD CONSTRAINT positive_amount_constraint CHECK (amount >= 0) NOT VALID;"
+
+
+
+
